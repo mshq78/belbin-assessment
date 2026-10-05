@@ -64,8 +64,11 @@ export function normalizeNationalIdInput(raw: string): string {
 
 type Field = 'name' | 'first' | 'last' | 'nid' | 'phone';
 
+/** Arabic ي / ك (common in exported sheets) -> Persian ی / ک */
+export const normalizePersianLetters = (s: string) => s.replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/ۀ/g, 'ه');
+
 function detectField(header: string): Field | null {
-  const h = header.replace(/[\s‌_-]+/g, '').toLowerCase();
+  const h = normalizePersianLetters(header).replace(/[\s‌_-]+/g, '').toLowerCase();
   if (!h) return null;
   if (/کدملی|شمارهملی|national|nid|کدمل/.test(h)) return 'nid';
   if (/تلفن|تماس|همراه|موبایل|mobile|phone|cell/.test(h)) return 'phone';
@@ -96,7 +99,7 @@ export function rowsToImport(data: Cell[][]): ImportRow[] {
 
   rows.slice(hasHeader ? 1 : 0).forEach((r, idx) => {
     const get = (f: Field) => (map[f] === undefined ? '' : cellToString(r[map[f] as number]));
-    const fullName = (get('name') || [get('first'), get('last')].filter(Boolean).join(' ')).replace(/\s+/g, ' ').trim();
+    const fullName = normalizePersianLetters(get('name') || [get('first'), get('last')].filter(Boolean).join(' ')).replace(/\s+/g, ' ').trim();
     const phoneRaw = get('phone');
     const nidRaw = get('nid');
     const phone = normalizePhone(phoneRaw);
