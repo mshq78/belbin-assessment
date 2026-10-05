@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ارزیابی نقش‌های تیمی مبتنی بر چارچوب بلبین</title>
+    <meta name="description" content="ابزار ارزیابی رفتاری آنلاین نقش‌های تیمی با محاسبه ۹ نقش، شاخص کیفیت پاسخ و گزارش تفصیلی" />
+    <meta property="og:title" content="ارزیابی نقش‌های تیمی مبتنی بر چارچوب بلبین" />
+    <meta property="og:description" content="ابزار ارزیابی رفتاری آنلاین نقش‌های تیمی با محاسبه ۹ نقش، شاخص کیفیت پاسخ و گزارش تفصیلی" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/og-image.png" />
+    <meta name="twitter:image" content="/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0E2340" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="preload" href="/fonts/Vazirmatn-Variable.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('belbin_theme');
+          var isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="antialiased selection:bg-amber-200/50 selection:text-slate-900 font-sans">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

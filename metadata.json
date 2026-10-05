@@ -1,0 +1,6 @@
+{
+  "name": "ارزیابی نقش‌های تیمی مبتنی بر چارچوب بلبین",
+  "description": "ابزار ارزیابی رفتاری آنلاین نقش‌های تیمی با محاسبه ۹ نقش، شاخص کیفیت پاسخ و گزارش تفصیلی",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

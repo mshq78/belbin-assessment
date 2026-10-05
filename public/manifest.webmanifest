@@ -1,0 +1,30 @@
+{
+  "name": "ارزیابی نقش‌های تیمی مبتنی بر چارچوب بلبین",
+  "short_name": "ارزیابی بلبین",
+  "description": "ابزار ارزیابی رفتاری آنلاین نقش‌های تیمی با محاسبه ۹ نقش، شاخص کیفیت پاسخ و گزارش تفصیلی",
+  "start_url": "./#/",
+  "display": "standalone",
+  "background_color": "#0E2340",
+  "theme_color": "#0E2340",
+  "dir": "rtl",
+  "lang": "fa",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
