@@ -4,7 +4,7 @@ import { useAssessment } from '../../context/AssessmentContext';
 import { SECTION_A_ITEMS } from '../../data';
 import { ChoiceA, ResponseA, DisplayedCardA } from '../../types';
 import { UI_STRINGS } from '../../content/ui.fa';
-import { Image as ImageIcon } from 'lucide-react';
+import { CardImage } from '../../components/CardImage';
 import { motion, AnimatePresence } from 'motion/react';
 
 export const SectionAView: React.FC = () => {
@@ -124,15 +124,7 @@ export const SectionAView: React.FC = () => {
                 : 'border-slate-200/90 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 shadow-xs'
             }`}
           >
-            {/* Visual Canvas Area */}
-            <div className="h-36 sm:h-44 bg-gradient-to-br from-slate-100 via-amber-50/40 to-slate-200 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900 flex flex-col items-center justify-center p-4 text-center relative border-b border-slate-200/60 dark:border-slate-800">
-              <div className="w-12 h-12 rounded-2xl bg-white/80 dark:bg-slate-800/80 shadow-xs flex items-center justify-center text-amber-600 dark:text-amber-400 mb-2">
-                <ImageIcon className="w-6 h-6 stroke-[1.5]" />
-              </div>
-              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
-                {UI_STRINGS.sectionA.placeholderTitle}
-              </span>
-            </div>
+            <CardImage src={firstCard.imagePath} alt={firstCard.imageDescription} />
 
             {/* Card Persian Title */}
             <div className="p-4 sm:p-5 flex-1 flex items-center justify-center text-center">
@@ -150,15 +142,7 @@ export const SectionAView: React.FC = () => {
                 : 'border-slate-200/90 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 shadow-xs'
             }`}
           >
-            {/* Visual Canvas Area */}
-            <div className="h-36 sm:h-44 bg-gradient-to-br from-slate-100 via-amber-50/40 to-slate-200 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900 flex flex-col items-center justify-center p-4 text-center relative border-b border-slate-200/60 dark:border-slate-800">
-              <div className="w-12 h-12 rounded-2xl bg-white/80 dark:bg-slate-800/80 shadow-xs flex items-center justify-center text-amber-600 dark:text-amber-400 mb-2">
-                <ImageIcon className="w-6 h-6 stroke-[1.5]" />
-              </div>
-              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
-                {UI_STRINGS.sectionA.placeholderTitle}
-              </span>
-            </div>
+            <CardImage src={secondCard.imagePath} alt={secondCard.imageDescription} />
 
             {/* Card Persian Title */}
             <div className="p-4 sm:p-5 flex-1 flex items-center justify-center text-center">
