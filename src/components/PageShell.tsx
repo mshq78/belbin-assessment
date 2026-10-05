@@ -33,7 +33,7 @@ export const PageShell: React.FC<PageShellProps> = ({
       {isOffline && <OfflineBanner />}
 
       {/* Top Header Bar */}
-      <header className="w-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 sticky top-0 z-40 px-4 py-2.5 transition-colors">
+      <header className="no-print w-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 sticky top-0 z-40 px-4 py-2.5 transition-colors">
         <div className="max-w-[720px] mx-auto flex items-center justify-between gap-3">
           <BrandLockup compact={compactHeader} />
 

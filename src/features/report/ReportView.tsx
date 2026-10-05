@@ -198,12 +198,12 @@ export const ReportView: React.FC = () => {
                 className="perspective-1000 cursor-pointer min-h-[280px]"
               >
                 <div
-                  className={`relative w-full h-full rounded-3xl transition-transform duration-500 transform-style-preserve-3d ${
+                  className={`flip-inner relative w-full h-full rounded-3xl transition-transform duration-500 transform-style-preserve-3d ${
                     isFlipped ? 'rotate-y-180' : ''
                   }`}
                 >
                   {/* FRONT of Card */}
-                  <div className="absolute inset-0 backface-hidden p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-amber-400/60 transition-colors">
+                  <div className="flip-face absolute inset-0 backface-hidden p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-amber-400/60 transition-colors">
                     <div>
                       {/* Top Rank Badge */}
                       <div className="flex items-center justify-between mb-3">
@@ -234,7 +234,7 @@ export const ReportView: React.FC = () => {
                   </div>
 
                   {/* BACK of Card (Flipped) */}
-                  <div className="absolute inset-0 backface-hidden rotate-y-180 p-5 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 text-amber-100 border border-amber-500/40 shadow-xl overflow-y-auto flex flex-col justify-between space-y-3">
+                  <div className="flip-face flip-face-back absolute inset-0 backface-hidden rotate-y-180 p-5 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 text-amber-100 border border-amber-500/40 shadow-xl overflow-y-auto flex flex-col justify-between space-y-3">
                     <div className="space-y-2.5 text-xs text-right">
                       <div className="border-b border-slate-800 pb-1.5 flex items-center justify-between">
                         <span className="font-bold text-amber-300">{role.persianTitle}</span>

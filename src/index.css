@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "./styles/tokens.css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
 }
@@ -56,6 +58,33 @@
   }
   .print-only {
     display: block !important;
+  }
+  /* Flip cards: flatten 3D so back faces are not printed mirrored */
+  .perspective-1000 {
+    perspective: none !important;
+    min-height: 0 !important;
+    break-inside: avoid;
+  }
+  .flip-inner {
+    transform: none !important;
+    transform-style: flat !important;
+    height: auto !important;
+  }
+  .flip-face {
+    position: static !important;
+    transform: none !important;
+    backface-visibility: visible !important;
+    -webkit-backface-visibility: visible !important;
+    overflow: visible !important;
+    margin-bottom: 8px;
+    box-shadow: none !important;
+  }
+  .flip-face-back {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+  }
+  .flip-face-back * {
+    color: #0f172a !important;
   }
   .page-break-inside-avoid {
     break-inside: avoid;
