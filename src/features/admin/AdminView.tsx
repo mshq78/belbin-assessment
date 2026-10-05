@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { SessionRecord } from '../../types';
-import { BRAND_CONFIG } from '../../config/brand';
 import { ROLE_CODES_LIST } from '../../config';
 import { UI_STRINGS } from '../../content/ui.fa';
 import { toPersianDigits, formatScore, formatSeconds } from '../../utils/number';
@@ -33,24 +32,36 @@ export const AdminView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [testResults, setTestResults] = useState<{ allPassed: boolean; results: TestResult[] } | null>(null);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadSessions();
-    }
-  }, [isAuthenticated]);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [dataSource, setDataSource] = useState<'server' | 'local'>('server');
+  const [loginMessage, setLoginMessage] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const loadSessions = async () => {
-    const list = await api.listSessions();
-    setSessions(list);
+  const loadSessions = async (pwd = adminPassword) => {
+    const result = await api.listSessionsAdmin(pwd);
+    if (result.status === 'ok') {
+      setSessions(result.sessions);
+      setDataSource(result.source);
+      return true;
+    }
+    return false;
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === BRAND_CONFIG.adminDemoPassword) {
+    setIsLoggingIn(true);
+    const result = await api.listSessionsAdmin(passwordInput);
+    setIsLoggingIn(false);
+    if (result.status === 'ok') {
+      setAdminPassword(passwordInput);
+      setSessions(result.sessions);
+      setDataSource(result.source);
       setIsAuthenticated(true);
       setLoginError(false);
+      setLoginMessage('');
     } else {
       setLoginError(true);
+      setLoginMessage(result.status === 'unconfigured' ? UI_STRINGS.admin.passwordNotConfigured : '');
     }
   };
 
@@ -175,12 +186,12 @@ export const AdminView: React.FC = () => {
               />
               {loginError && (
                 <p className="text-xs text-rose-500 mt-1 font-medium">
-                  {UI_STRINGS.admin.invalidPassword}
+                  {loginMessage || UI_STRINGS.admin.invalidPassword}
                 </p>
               )}
             </div>
 
-            <Button type="submit" variant="primary" size="md" className="w-full">
+            <Button type="submit" variant="primary" size="md" className="w-full" isLoading={isLoggingIn}>
               {UI_STRINGS.admin.loginButton}
             </Button>
 
@@ -196,7 +207,7 @@ export const AdminView: React.FC = () => {
           </form>
 
           <p className="text-[10px] text-slate-400 text-center leading-relaxed">
-            {UI_STRINGS.admin.demoNotice}
+            {UI_STRINGS.admin.authNotice}
           </p>
         </div>
       </div>
@@ -219,6 +230,11 @@ export const AdminView: React.FC = () => {
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {UI_STRINGS.admin.totalSessions} <strong>{toPersianDigits(sessions.length)}</strong> جلسه ثبت‌شده
           </p>
+          {dataSource === 'local' && (
+            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1 font-medium">
+              {UI_STRINGS.admin.localDataNotice}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -316,7 +332,7 @@ export const AdminView: React.FC = () => {
         </div>
         <button
           type="button"
-          onClick={loadSessions}
+          onClick={() => loadSessions()}
           className="p-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-amber-400 cursor-pointer transition shadow-xs"
           title={UI_STRINGS.admin.refresh}
         >

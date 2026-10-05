@@ -91,6 +91,14 @@ export const AssessmentProvider: React.FC<{ children: ReactNode }> = ({ children
     });
   }, []);
 
+  // Retry uploads that failed earlier (offline / server error), now and whenever we come back online
+  useEffect(() => {
+    api.flushPendingSessions();
+    const onOnline = () => api.flushPendingSessions();
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, []);
+
   // Check saved progress on mount
   useEffect(() => {
     async function initCheck() {
