@@ -5,10 +5,10 @@ import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from
 /**
  * POST /api/auth  { phone, nationalId }
  *  - username = mobile number, password = national ID
- *  - first login for a phone number registers it; later logins must present the same national ID
+ *  - only accounts imported by the admin (/api/users) can log in; there is no self-registration
  *  - the national ID is only stored as a salted scrypt hash
  *  - 5 failed attempts lock the account for 15 minutes
- * Returns { token, phone, latest } where `latest` is the user's most recent completed session (or null).
+ * Returns { token, phone, fullName, latest } where `latest` is the user's most recent completed session (or null).
  *
  * Required env: DATABASE_URL (or POSTGRES_URL). Optional: SESSION_SECRET.
  */
@@ -29,12 +29,14 @@ function ensureTables() {
         CREATE TABLE IF NOT EXISTS naghshnama_users (
           phone           TEXT PRIMARY KEY,
           nid_hash        TEXT NOT NULL,
+          full_name       TEXT,
           failed_attempts INTEGER NOT NULL DEFAULT 0,
           locked_until    TIMESTAMPTZ,
           created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
           last_login_at   TIMESTAMPTZ
         )
       `;
+      await sql`ALTER TABLE naghshnama_users ADD COLUMN IF NOT EXISTS full_name TEXT`;
       await sql`
         CREATE TABLE IF NOT EXISTS naghshnama_sessions (
           session_id  TEXT PRIMARY KEY,
@@ -88,6 +90,8 @@ function hashNid(nid: string, saltHex = randomBytes(16).toString('hex')) {
   return `${saltHex}:${scryptSync(nid, Buffer.from(saltHex, 'hex'), 32).toString('hex')}`;
 }
 
+const DUMMY_HASH = hashNid('0000000000');
+
 function verifyNid(nid: string, stored: string) {
   const [salt, hash] = stored.split(':');
   const a = Buffer.from(hash, 'hex');
@@ -109,33 +113,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     await ensureTables();
-    const rows = await sql!`SELECT nid_hash, failed_attempts, locked_until FROM naghshnama_users WHERE phone = ${phone}`;
+    const rows = await sql!`SELECT nid_hash, full_name, failed_attempts, locked_until FROM naghshnama_users WHERE phone = ${phone}`;
 
     if (rows.length === 0) {
-      await sql!`
-        INSERT INTO naghshnama_users (phone, nid_hash, last_login_at)
-        VALUES (${phone}, ${hashNid(nid)}, now())
-        ON CONFLICT (phone) DO NOTHING
-      `;
-    } else {
-      const user: any = rows[0];
-      if (user.locked_until && new Date(user.locked_until).getTime() > Date.now()) {
-        return res.status(429).json({ error: 'locked' });
-      }
-      if (!verifyNid(nid, user.nid_hash)) {
-        const failed = (user.failed_attempts || 0) + 1;
-        if (failed >= MAX_FAILED) {
-          await sql!`UPDATE naghshnama_users SET failed_attempts = 0, locked_until = now() + make_interval(mins => ${LOCK_MINUTES}) WHERE phone = ${phone}`;
-          return res.status(429).json({ error: 'locked' });
-        }
-        await sql!`UPDATE naghshnama_users SET failed_attempts = ${failed} WHERE phone = ${phone}`;
-        return res.status(401).json({ error: 'invalid_credentials' });
-      }
-      await sql!`UPDATE naghshnama_users SET failed_attempts = 0, locked_until = NULL, last_login_at = now() WHERE phone = ${phone}`;
+      // Unknown phone: do the same amount of work as a real check and answer exactly like a wrong password.
+      verifyNid(nid, DUMMY_HASH);
+      return res.status(401).json({ error: 'invalid_credentials' });
     }
 
+    const user: any = rows[0];
+    if (user.locked_until && new Date(user.locked_until).getTime() > Date.now()) {
+      return res.status(429).json({ error: 'locked' });
+    }
+    if (!verifyNid(nid, user.nid_hash)) {
+      const failed = (user.failed_attempts || 0) + 1;
+      if (failed >= MAX_FAILED) {
+        await sql!`UPDATE naghshnama_users SET failed_attempts = 0, locked_until = now() + make_interval(mins => ${LOCK_MINUTES}) WHERE phone = ${phone}`;
+        return res.status(429).json({ error: 'locked' });
+      }
+      await sql!`UPDATE naghshnama_users SET failed_attempts = ${failed} WHERE phone = ${phone}`;
+      return res.status(401).json({ error: 'invalid_credentials' });
+    }
+    await sql!`UPDATE naghshnama_users SET failed_attempts = 0, locked_until = NULL, last_login_at = now() WHERE phone = ${phone}`;
+
     const latest = await sql!`SELECT data FROM naghshnama_sessions WHERE phone = ${phone} ORDER BY created_at DESC LIMIT 1`;
-    return res.status(200).json({ token: signToken(phone), phone, latest: latest.length ? (latest[0] as any).data : null });
+    return res.status(200).json({ token: signToken(phone), phone, fullName: user.full_name || null, latest: latest.length ? (latest[0] as any).data : null });
   } catch (err) {
     console.error('auth api error', err);
     return res.status(500).json({ error: 'server_error' });

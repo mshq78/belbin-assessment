@@ -27,6 +27,17 @@ function ensureTable() {
           updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
         )
       `;
+      await sql`
+        CREATE TABLE IF NOT EXISTS naghshnama_users (
+          phone           TEXT PRIMARY KEY,
+          nid_hash        TEXT NOT NULL,
+          full_name       TEXT,
+          failed_attempts INTEGER NOT NULL DEFAULT 0,
+          locked_until    TIMESTAMPTZ,
+          created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+          last_login_at   TIMESTAMPTZ
+        )
+      `;
       await sql`CREATE INDEX IF NOT EXISTS naghshnama_sessions_phone_idx ON naghshnama_sessions (phone, created_at DESC)`;
     })().catch((err) => {
       tableReady = null;
@@ -98,7 +109,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'invalid_session' });
       }
       await ensureTable();
-      const session = { ...req.body, participantProfile: { ...(req.body.participantProfile || {}), mobile: phone } };
+      const user: any = (await sql!`SELECT full_name FROM naghshnama_users WHERE phone = ${phone}`)[0];
+      const fullName: string | undefined = user?.full_name || undefined;
+      const session = {
+        ...req.body,
+        participantName: fullName || req.body.participantName,
+        participantProfile: { ...(req.body.participantProfile || {}), mobile: phone, ...(fullName ? { fullName } : {}) },
+      };
       await sql!`
         INSERT INTO naghshnama_sessions (session_id, phone, data)
         VALUES (${session.sessionId}, ${phone}, ${JSON.stringify(session)}::jsonb)

@@ -8,6 +8,7 @@ import { toPersianDigits, formatScore, formatSeconds } from '../../utils/number'
 import { runAllUnitTests, TestResult } from '../../test/unitTests';
 import { Modal } from '../../components/Modal';
 import { Button } from '../../components/Button';
+import { UsersPanel } from './UsersPanel';
 import {
   Lock,
   FileJson,
@@ -33,6 +34,7 @@ export const AdminView: React.FC = () => {
   const [testResults, setTestResults] = useState<{ allPassed: boolean; results: TestResult[] } | null>(null);
 
   const [adminPassword, setAdminPassword] = useState('');
+  const [tab, setTab] = useState<'results' | 'users'>('results');
   const [dataSource, setDataSource] = useState<'server' | 'local'>('server');
   const [loginMessage, setLoginMessage] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -278,6 +280,30 @@ export const AdminView: React.FC = () => {
         </div>
       </header>
 
+      {/* Tabs */}
+      <div role="tablist" className="flex gap-2">
+        {(['results', 'users'] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            role="tab"
+            aria-selected={tab === t}
+            onClick={() => setTab(t)}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors ${
+              tab === t
+                ? 'bg-slate-900 text-amber-100 dark:bg-amber-500 dark:text-slate-950'
+                : 'bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
+            }`}
+          >
+            {t === 'results' ? UI_STRINGS.adminUsers.tabResults : UI_STRINGS.adminUsers.tabUsers}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'users' && <UsersPanel adminPassword={adminPassword} />}
+
+      {tab === 'results' && (
+        <>
       {/* Embedded Unit Test Results */}
       {testResults && (
         <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
@@ -552,6 +578,8 @@ export const AdminView: React.FC = () => {
           </div>
         )}
       </Modal>
+        </>
+      )}
     </div>
   );
 };

@@ -42,7 +42,7 @@ export const StartScreen: React.FC = () => {
   const handleStart = async () => {
     if (!user) return;
     setIsLoading(true);
-    await startAssessment({ mobile: user.phone });
+    await startAssessment({ mobile: user.phone, fullName: user.fullName });
     setIsLoading(false);
     navigate('/section-a');
   };
@@ -78,7 +78,7 @@ export const StartScreen: React.FC = () => {
                 {UI_STRINGS.login.welcome}
               </h2>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                {UI_STRINGS.login.loggedInAs} <span dir="ltr">{toPersianDigits(user.phone)}</span>
+                {user.fullName ? `${user.fullName} — ` : ''}{UI_STRINGS.login.loggedInAs} <span dir="ltr">{toPersianDigits(user.phone)}</span>
               </p>
             </div>
             <button

@@ -2,6 +2,14 @@ import { SessionRecord, InProgressAssessment } from '../types';
 import { BRAND_CONFIG } from '../config/brand';
 import { auth } from './auth';
 
+export interface AdminUser {
+  phone: string;
+  fullName: string | null;
+  createdAt: string;
+  lastLoginAt: string | null;
+  sessions: number;
+}
+
 export type SyncStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 type SyncListener = (status: SyncStatus) => void;
@@ -188,6 +196,37 @@ class ApiService {
       return { status: 'ok', sessions: this.readAllLocalSessions(), source: 'local' };
     }
     return { status: 'unauthorized' };
+  }
+
+  // ---- Admin: user management ------------------------------------------------------------
+
+  private async adminFetch(adminPassword: string, url: string, init: RequestInit = {}) {
+    const res = await fetch(url, {
+      ...init,
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword, ...(init.headers || {}) },
+    });
+    const isJson = (res.headers.get('content-type') || '').includes('application/json');
+    if (!isJson) throw new Error('backend_unavailable');
+    const body = await res.json();
+    if (res.status === 401) throw new Error('unauthorized');
+    if (!res.ok) throw new Error(body?.error || `http_${res.status}`);
+    return body;
+  }
+
+  async listUsersAdmin(adminPassword: string): Promise<AdminUser[]> {
+    const body = await this.adminFetch(adminPassword, '/api/users');
+    return body.users as AdminUser[];
+  }
+
+  async importUsersAdmin(
+    adminPassword: string,
+    users: { fullName: string; phone: string; nationalId: string }[]
+  ): Promise<{ created: number; updated: number; errors: { index: number; reason: string }[] }> {
+    return this.adminFetch(adminPassword, '/api/users', { method: 'POST', body: JSON.stringify({ users }) });
+  }
+
+  async deleteUserAdmin(adminPassword: string, phone: string): Promise<void> {
+    await this.adminFetch(adminPassword, `/api/users?phone=${encodeURIComponent(phone)}`, { method: 'DELETE' });
   }
 
   /**

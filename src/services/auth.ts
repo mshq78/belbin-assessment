@@ -6,6 +6,7 @@ const AUTH_STORAGE_KEY = 'naghshnama_auth_v1';
 export interface AuthUser {
   phone: string;
   token: string;
+  fullName?: string;
 }
 
 export type LoginResult =
@@ -94,7 +95,7 @@ class AuthService {
 
       if (res.ok && isJson) {
         const body = await res.json();
-        const user = { phone: body.phone as string, token: body.token as string };
+        const user: AuthUser = { phone: body.phone as string, token: body.token as string, fullName: body.fullName || undefined };
         this.set(user);
         return { status: 'ok', user, latest: (body.latest as SessionRecord) || null };
       }
