@@ -37,7 +37,7 @@ export const CardImage: React.FC<CardImageProps> = ({ src, alt }) => {
           decoding="async"
           draggable={false}
           onError={() => setFailed(true)}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-[50%_30%]"
         />
       )}
     </div>
