@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Upload, Download, Trash2, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Upload, Download, Trash2, RefreshCw, CheckCircle2, AlertTriangle, UserPlus } from 'lucide-react';
 import { api, AdminUser } from '../../services/api';
 import { UI_STRINGS } from '../../content/ui.fa';
 import { Button } from '../../components/Button';
 import { toPersianDigits } from '../../utils/number';
-import { ImportRow, parseUsersFile, TEMPLATE_CSV } from '../../utils/usersImport';
+import { ImportRow, parseUsersFile, TEMPLATE_CSV, normalizeNationalIdInput, normalizePersianLetters } from '../../utils/usersImport';
+import { normalizePhone, validateNationalId } from '../../services/auth';
 
 const S = UI_STRINGS.adminUsers;
 const CHUNK = 40;
@@ -27,6 +28,47 @@ export const UsersPanel: React.FC<{ adminPassword: string }> = ({ adminPassword 
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<{ created: number; updated: number; failed: number } | null>(null);
   const [importError, setImportError] = useState('');
+
+  // Single-user form
+  const [addName, setAddName] = useState('');
+  const [addPhone, setAddPhone] = useState('');
+  const [addNid, setAddNid] = useState('');
+  const [addErrors, setAddErrors] = useState<{ name?: string; phone?: string; nid?: string }>({});
+  const [adding, setAdding] = useState(false);
+  const [addMessage, setAddMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddMessage(null);
+    const name = normalizePersianLetters(addName).replace(/\s+/g, ' ').trim();
+    const phone = normalizePhone(addPhone);
+    const nid = normalizeNationalIdInput(addNid);
+    const errs = {
+      name: name ? undefined : S.nameRequired,
+      phone: /^09\d{9}$/.test(phone) ? undefined : S.phoneInvalid,
+      nid: validateNationalId(nid) ? undefined : S.nidInvalid,
+    };
+    setAddErrors(errs);
+    if (errs.name || errs.phone || errs.nid) return;
+
+    setAdding(true);
+    try {
+      const res = await api.importUsersAdmin(adminPassword, [{ fullName: name, phone, nationalId: nid }]);
+      if (res.errors.length > 0) throw new Error('rejected');
+      setAddMessage({ ok: true, text: res.updated > 0 ? S.addedUpdated : S.addedNew });
+      setAddName('');
+      setAddPhone('');
+      setAddNid('');
+      await loadUsers();
+    } catch (err) {
+      setAddMessage({
+        ok: false,
+        text: err instanceof Error && err.message === 'backend_unavailable' ? S.backendUnavailable : S.addFailed,
+      });
+    } finally {
+      setAdding(false);
+    }
+  };
 
   const loadUsers = useCallback(async () => {
     try {
@@ -125,6 +167,48 @@ export const UsersPanel: React.FC<{ adminPassword: string }> = ({ adminPassword 
 
   return (
     <div className="space-y-6">
+      {/* Add single user */}
+      <section className="p-5 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-4">
+        <div>
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">{S.addTitle}</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{S.addHint}</p>
+        </div>
+        <form onSubmit={handleAdd} noValidate className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
+          {([
+            { id: 'add-name', label: S.fieldName, value: addName, set: setAddName, ph: S.fieldNamePlaceholder, err: addErrors.name, ltr: false, type: 'text' },
+            { id: 'add-phone', label: S.fieldPhone, value: addPhone, set: setAddPhone, ph: '09123456789', err: addErrors.phone, ltr: true, type: 'tel' },
+            { id: 'add-nid', label: S.fieldNid, value: addNid, set: setAddNid, ph: '0123456789', err: addErrors.nid, ltr: true, type: 'text' },
+          ] as const).map((f) => (
+            <div key={f.id}>
+              <label htmlFor={f.id} className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">{f.label}</label>
+              <input
+                id={f.id}
+                type={f.type}
+                inputMode={f.ltr ? 'numeric' : undefined}
+                dir={f.ltr ? 'ltr' : undefined}
+                value={f.value}
+                onChange={(e) => f.set(e.target.value)}
+                placeholder={f.ph}
+                className={`w-full px-3.5 py-2.5 rounded-xl border bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 ${
+                  f.err ? 'border-rose-400 focus:ring-rose-400' : 'border-slate-300 dark:border-slate-700 focus:ring-amber-400'
+                }`}
+              />
+              {f.err && <p className="text-[11px] text-rose-500 mt-1">{f.err}</p>}
+            </div>
+          ))}
+          <div className="sm:col-span-3 flex flex-wrap items-center gap-3">
+            <Button type="submit" variant="primary" size="md" isLoading={adding} leftIcon={<UserPlus className="w-4 h-4" />}>
+              {S.addButton}
+            </Button>
+            {addMessage && (
+              <p role={addMessage.ok ? 'status' : 'alert'} className={`text-xs font-medium ${addMessage.ok ? 'text-amber-800 dark:text-amber-300' : 'text-rose-600 dark:text-rose-400'}`}>
+                {addMessage.text}
+              </p>
+            )}
+          </div>
+        </form>
+      </section>
+
       {/* Import card */}
       <section className="p-5 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-4">
         <div>
