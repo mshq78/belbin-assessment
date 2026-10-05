@@ -19,6 +19,7 @@ import {
 import { generateRandomOrdersForSession } from '../randomize';
 import { calculateScores } from '../scoring';
 import { calculateRQI } from '../rqi';
+import { auth } from '../services/auth';
 import { api, SyncStatus } from '../services/api';
 import { INSTRUMENT_VERSION, WEIGHTS } from '../config';
 import { generateTrackingCode } from '../utils/number';
@@ -57,6 +58,7 @@ interface AssessmentContextType {
   recordResponseC: (response: ResponseC) => Promise<boolean>; // returns true if finished section C
   finalizeAssessment: () => Promise<SessionRecord>;
   resetAll: () => Promise<void>;
+  showCompletedSession: (record: SessionRecord) => void;
   autoFillAllAnswers: () => Promise<SessionRecord>;
 }
 
@@ -108,6 +110,10 @@ export const AssessmentProvider: React.FC<{ children: ReactNode }> = ({ children
       }
     }
     initCheck();
+    // Re-check whenever the logged-in user changes (progress is stored per phone number)
+    return auth.subscribe(() => {
+      initCheck();
+    });
   }, []);
 
   // Start new assessment
@@ -491,6 +497,7 @@ export const AssessmentProvider: React.FC<{ children: ReactNode }> = ({ children
         recordResponseC,
         finalizeAssessment,
         resetAll,
+        showCompletedSession: setCompletedSession,
         autoFillAllAnswers,
       }}
     >

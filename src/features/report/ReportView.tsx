@@ -63,7 +63,7 @@ export const ReportView: React.FC = () => {
 
   const handleCopyTracking = async () => {
     setIsCopying(true);
-    const text = `کد پیگیری ارزیابی بلبین: ${trackingCode}\nلینک ارزیابی: ${window.location.origin}`;
+    const text = `کد پیگیری نقش‌نما: ${trackingCode}\nلینک ارزیابی: ${window.location.origin}`;
     try {
       await navigator.clipboard.writeText(text);
       setTimeout(() => setIsCopying(false), 2000);
@@ -81,7 +81,7 @@ export const ReportView: React.FC = () => {
         backgroundColor: document.documentElement.classList.contains('dark') ? '#08121D' : '#F8F5EE',
       });
       const link = document.createElement('a');
-      link.download = `belbin_report_${trackingCode || 'result'}.png`;
+      link.download = `naghshnama_report_${trackingCode || 'result'}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {

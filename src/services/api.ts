@@ -1,13 +1,17 @@
 import { SessionRecord, InProgressAssessment } from '../types';
 import { BRAND_CONFIG } from '../config/brand';
+import { auth } from './auth';
 
 export type SyncStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 type SyncListener = (status: SyncStatus) => void;
 
-const SESSIONS_STORAGE_KEY = 'belbin_eval_sessions_v1';
-const PROGRESS_STORAGE_KEY = 'belbin_eval_progress_v1';
-const PENDING_STORAGE_KEY = 'belbin_eval_pending_v1';
+const SESSIONS_KEY_BASE = 'naghshnama_sessions_v1';
+const PROGRESS_KEY_BASE = 'naghshnama_progress_v1';
+const PENDING_KEY_BASE = 'naghshnama_pending_v1';
+
+/** Local data is namespaced per logged-in phone number so users sharing a device never see each other's data. */
+const scoped = (base: string) => `${base}:${auth.getUser()?.phone ?? 'anon'}`;
 
 class ApiService {
   private syncStatus: SyncStatus = 'idle';
@@ -40,12 +44,27 @@ class ApiService {
 
   private readLocalSessions(): SessionRecord[] {
     try {
-      const data = localStorage.getItem(SESSIONS_STORAGE_KEY);
+      const data = localStorage.getItem(scoped(SESSIONS_KEY_BASE));
       return data ? (JSON.parse(data) as SessionRecord[]) : [];
     } catch (e) {
       console.error('Failed to parse sessions', e);
       return [];
     }
+  }
+
+  private readAllLocalSessions(): SessionRecord[] {
+    const all: SessionRecord[] = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(SESSIONS_KEY_BASE)) {
+          all.push(...(JSON.parse(localStorage.getItem(key) || '[]') as SessionRecord[]));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to read local sessions', e);
+    }
+    return all;
   }
 
   private writeLocalSession(session: SessionRecord) {
@@ -54,7 +73,7 @@ class ApiService {
       const index = list.findIndex((s) => s.sessionId === session.sessionId);
       if (index >= 0) list[index] = session;
       else list.unshift(session);
-      localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(list));
+      localStorage.setItem(scoped(SESSIONS_KEY_BASE), JSON.stringify(list));
     } catch (e) {
       console.error('Local backup failed', e);
     }
@@ -62,7 +81,7 @@ class ApiService {
 
   private readPending(): string[] {
     try {
-      return JSON.parse(localStorage.getItem(PENDING_STORAGE_KEY) || '[]');
+      return JSON.parse(localStorage.getItem(scoped(PENDING_KEY_BASE)) || '[]');
     } catch {
       return [];
     }
@@ -70,7 +89,7 @@ class ApiService {
 
   private writePending(ids: string[]) {
     try {
-      localStorage.setItem(PENDING_STORAGE_KEY, JSON.stringify(ids));
+      localStorage.setItem(scoped(PENDING_KEY_BASE), JSON.stringify(ids));
     } catch {
       /* ignore */
     }
@@ -78,11 +97,16 @@ class ApiService {
 
   private async postSession(session: SessionRecord): Promise<void> {
     if (this.simulatedOffline) throw new Error('Network simulated offline');
+    if (auth.getToken() === 'dev-local') return; // local development login: no backend
     const res = await fetch('/api/sessions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${auth.getToken() ?? ''}`,
+      },
       body: JSON.stringify(session),
     });
+    if (res.status === 401 && auth.getToken() !== 'dev-local') auth.logout();
     if (!res.ok) throw new Error(`POST /api/sessions failed: ${res.status}`);
   }
 
@@ -126,6 +150,11 @@ class ApiService {
     this.writePending(remaining);
   }
 
+  /** Caches a session fetched from the server (e.g. returned at login) in this device's local store. */
+  cacheSession(session: SessionRecord) {
+    this.writeLocalSession(session);
+  }
+
   /**
    * Retrieves single session by ID (local cache; used for the participant's own report)
    */
@@ -156,7 +185,7 @@ class ApiService {
     }
     // Backend not available: only in dev allow the local demo fallback.
     if (import.meta.env.DEV && adminPassword === BRAND_CONFIG.adminDemoPassword) {
-      return { status: 'ok', sessions: this.readLocalSessions(), source: 'local' };
+      return { status: 'ok', sessions: this.readAllLocalSessions(), source: 'local' };
     }
     return { status: 'unauthorized' };
   }
@@ -168,7 +197,7 @@ class ApiService {
   async saveProgress(progress: InProgressAssessment): Promise<void> {
     this.setSyncStatus('saving');
     try {
-      localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progress));
+      localStorage.setItem(scoped(PROGRESS_KEY_BASE), JSON.stringify(progress));
       await this.delay(200);
       this.setSyncStatus('saved');
       setTimeout(() => {
@@ -184,7 +213,7 @@ class ApiService {
    */
   async getProgress(): Promise<InProgressAssessment | null> {
     try {
-      const data = localStorage.getItem(PROGRESS_STORAGE_KEY);
+      const data = localStorage.getItem(scoped(PROGRESS_KEY_BASE));
       if (!data) return null;
       return JSON.parse(data) as InProgressAssessment;
     } catch (e) {
@@ -197,7 +226,7 @@ class ApiService {
    */
   async clearProgress(): Promise<void> {
     try {
-      localStorage.removeItem(PROGRESS_STORAGE_KEY);
+      localStorage.removeItem(scoped(PROGRESS_KEY_BASE));
     } catch (e) {
       console.error('Failed to clear progress', e);
     }

@@ -10,8 +10,8 @@ export interface StorageService {
 }
 
 const STORAGE_KEYS = {
-  SESSIONS: 'belbin_eval_sessions_v1',
-  PROGRESS: 'belbin_eval_progress_v1',
+  SESSIONS: 'naghshnama_sessions_v1',
+  PROGRESS: 'naghshnama_progress_v1',
 };
 
 class LocalStorageService implements StorageService {

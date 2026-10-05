@@ -60,7 +60,7 @@ export const ROLES_METADATA: Record<RoleCode, RoleMeta> = {
 
 export const ROLE_CODES_LIST: RoleCode[] = ['PL', 'RI', 'CO', 'SH', 'ME', 'TW', 'IMP', 'CF', 'SP'];
 
-export const TOOL_TITLE = 'ارزیابی نقش‌های تیمی مبتنی بر چارچوب بلبین';
+export const TOOL_TITLE = 'نقش‌نما';
 
 export const CATEGORY_LABELS = {
   preferred: 'ترجیحی',

@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAssessment } from '../../context/AssessmentContext';
 import { UI_STRINGS } from '../../content/ui.fa';
 import { Button } from '../../components/Button';
 import { BrandLockup } from '../../components/BrandLockup';
-import { validateIranMobile, normalizeToEnglishDigits } from '../../utils/number';
+import { toPersianDigits } from '../../utils/number';
+import { auth, AuthUser } from '../../services/auth';
+import { api } from '../../services/api';
+import { SessionRecord } from '../../types';
+import { LoginForm } from './LoginForm';
 import {
   Sparkles,
   Clock,
   Shield,
   ArrowLeft,
   RotateCcw,
-  CheckCircle2,
+  LogOut,
   Users,
   Layers,
   Flame,
@@ -20,38 +24,39 @@ import { motion } from 'motion/react';
 
 export const StartScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { startAssessment, resumeAssessment, hasSavedProgress } = useAssessment();
+  const { startAssessment, resumeAssessment, hasSavedProgress, showCompletedSession } = useAssessment();
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [mobile, setMobile] = useState('');
-  const [orgCode, setOrgCode] = useState('');
-  const [mobileError, setMobileError] = useState('');
+  const [user, setUser] = useState<AuthUser | null>(auth.getUser());
+  const [previousResult, setPreviousResult] = useState<SessionRecord | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleStart = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => auth.subscribe(setUser), []);
 
-    // Validate mobile if entered
-    if (mobile.trim() && !validateIranMobile(mobile)) {
-      setMobileError(UI_STRINGS.start.mobileError);
-      return;
+  const handleLoggedIn = (latest: SessionRecord | null) => {
+    if (latest) {
+      api.cacheSession(latest);
+      setPreviousResult(latest);
     }
-    setMobileError('');
+  };
+
+  const handleStart = async () => {
+    if (!user) return;
     setIsLoading(true);
-
-    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim() || undefined;
-
-    await startAssessment({
-      firstName: firstName.trim() || undefined,
-      lastName: lastName.trim() || undefined,
-      mobile: normalizeToEnglishDigits(mobile.trim()) || undefined,
-      orgCode: orgCode.trim() || undefined,
-      fullName,
-    });
-
+    await startAssessment({ mobile: user.phone });
     setIsLoading(false);
     navigate('/section-a');
+  };
+
+  const handleViewPrevious = () => {
+    if (!previousResult) return;
+    showCompletedSession(previousResult);
+    navigate('/report');
+  };
+
+  const handleLogout = () => {
+    auth.logout();
+    window.location.hash = '#/';
+    window.location.reload();
   };
 
   const handleResume = async () => {
@@ -60,6 +65,64 @@ export const StartScreen: React.FC = () => {
     setIsLoading(false);
     navigate(targetRoute);
   };
+
+  const renderAccount = () => (
+    <>
+      {!user ? (
+        <LoginForm onLoggedIn={handleLoggedIn} />
+      ) : (
+        <div className="p-5 sm:p-6 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-md space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
+                {UI_STRINGS.login.welcome}
+              </h2>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                {UI_STRINGS.login.loggedInAs} <span dir="ltr">{toPersianDigits(user.phone)}</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              {UI_STRINGS.login.logout}
+            </button>
+          </div>
+
+          {previousResult && (
+            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-2">
+              <div>
+                <h3 className="text-sm font-bold text-amber-950 dark:text-amber-100">
+                  {UI_STRINGS.login.previousResultTitle}
+                </h3>
+                <p className="text-xs text-amber-800 dark:text-amber-300/90 mt-0.5">
+                  {UI_STRINGS.login.previousResultDesc}
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleViewPrevious} className="w-full sm:w-auto">
+                {UI_STRINGS.login.viewPreviousResult}
+              </Button>
+            </div>
+          )}
+
+          <p className="text-[10px] text-slate-400 leading-relaxed">{UI_STRINGS.start.privacyNote}</p>
+
+          <Button
+            variant="primary"
+            size="lg"
+            isLoading={isLoading}
+            onClick={handleStart}
+            className="w-full"
+            leftIcon={<ArrowLeft className="w-5 h-5 rtl:rotate-180" />}
+          >
+            {UI_STRINGS.start.startButton}
+          </Button>
+        </div>
+      )}
+    </>
+  );
 
   return (
     <div className="py-2 sm:py-6 space-y-6 sm:space-y-8 select-none">
@@ -88,8 +151,10 @@ export const StartScreen: React.FC = () => {
         </p>
       </motion.div>
 
+      {!user && renderAccount()}
+
       {/* Resume Banner if in-progress session exists */}
-      {hasSavedProgress && (
+      {user && hasSavedProgress && (
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -173,109 +238,7 @@ export const StartScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* Participant Form */}
-      <form
-        onSubmit={handleStart}
-        className="p-5 sm:p-6 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-md space-y-4"
-      >
-        <div className="border-b border-slate-100 dark:border-slate-800 pb-2">
-          <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
-            {UI_STRINGS.start.formHeader}
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="p-first-name" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {UI_STRINGS.start.firstName}
-            </label>
-            <input
-              id="p-first-name"
-              type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder={UI_STRINGS.start.firstNamePlaceholder}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="p-last-name" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {UI_STRINGS.start.lastName}
-            </label>
-            <input
-              id="p-last-name"
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder={UI_STRINGS.start.lastNamePlaceholder}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="p-mobile" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {UI_STRINGS.start.mobile}
-            </label>
-            <input
-              id="p-mobile"
-              type="tel"
-              value={mobile}
-              onChange={(e) => {
-                setMobile(e.target.value);
-                if (mobileError) setMobileError('');
-              }}
-              placeholder={UI_STRINGS.start.mobilePlaceholder}
-              dir="ltr"
-              className={`w-full px-3.5 py-2.5 rounded-xl border bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs sm:text-sm focus:outline-none focus:ring-2 ${
-                mobileError
-                  ? 'border-rose-400 focus:ring-rose-400'
-                  : 'border-slate-300 dark:border-slate-700 focus:ring-amber-400'
-              }`}
-            />
-            {mobileError ? (
-              <p className="text-[11px] text-rose-500 mt-1">{mobileError}</p>
-            ) : (
-              <p className="text-[10px] text-slate-400 mt-1">{UI_STRINGS.start.mobileHint}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="p-org" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              {UI_STRINGS.start.orgCode}
-            </label>
-            <input
-              id="p-org"
-              type="text"
-              value={orgCode}
-              onChange={(e) => setOrgCode(e.target.value)}
-              placeholder={UI_STRINGS.start.orgCodePlaceholder}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-            />
-          </div>
-        </div>
-
-        {/* Privacy Note */}
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed pt-1">
-          {UI_STRINGS.start.privacyNote}
-        </p>
-
-        {/* Start Button */}
-        <div className="pt-2">
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            isLoading={isLoading}
-            className="w-full"
-            leftIcon={<ArrowLeft className="w-5 h-5 rtl:rotate-180" />}
-          >
-            {UI_STRINGS.start.startButton}
-          </Button>
-        </div>
-      </form>
+      {user && renderAccount()}
     </div>
   );
 };

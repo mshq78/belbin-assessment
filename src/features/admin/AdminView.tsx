@@ -75,7 +75,7 @@ export const AdminView: React.FC = () => {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(sessions, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `belbin_sessions_${new Date().toISOString().slice(0, 10)}.json`);
+    downloadAnchor.setAttribute('download', `naghshnama_sessions_${new Date().toISOString().slice(0, 10)}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -137,7 +137,7 @@ export const AdminView: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `belbin_sessions_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `naghshnama_sessions_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -370,7 +370,7 @@ export const AdminView: React.FC = () => {
                     <tr key={session.sessionId} className="hover:bg-amber-50/20 dark:hover:bg-slate-800/50 transition">
                       <td className="p-3.5">
                         <div className="font-bold text-slate-900 dark:text-slate-100">
-                          {session.participantName || 'ناشناس'}
+                          {session.participantName || session.participantProfile?.mobile || 'ناشناس'}
                         </div>
                         <div className="text-[10px] text-slate-400 font-mono mt-0.5">
                           {session.trackingCode || session.sessionId.slice(0, 8)}
@@ -421,7 +421,7 @@ export const AdminView: React.FC = () => {
             <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2">
               <div>
                 <span className="font-bold text-slate-900 dark:text-slate-100 text-sm block">
-                  {selectedSession.participantName || 'ناشناس'}
+                  {selectedSession.participantName || selectedSession.participantProfile?.mobile || 'ناشناس'}
                 </span>
                 <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                   کد پیگیری: {selectedSession.trackingCode || '—'}

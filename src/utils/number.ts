@@ -36,11 +36,11 @@ export function validateIranMobile(mobile: string): boolean {
 }
 
 /**
- * Generates an elegant tracking code like "۲۴۹۱-BLB7"
+ * Generates an elegant tracking code like "۲۴۹۱-NQ7"
  */
 export function generateTrackingCode(): string {
   const num = Math.floor(1000 + Math.random() * 9000);
-  const suffix = 'BLB' + (Math.floor(Math.random() * 9) + 1);
+  const suffix = 'NQ' + (Math.floor(Math.random() * 9) + 1);
   return `${toPersianDigits(num)}-${suffix}`;
 }
 

@@ -1,10 +1,11 @@
 import React, { Suspense, lazy } from 'react';
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AssessmentProvider, useAssessment } from './context/AssessmentContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PageShell } from './components/PageShell';
 import { DevToolbar } from './components/DevToolbar';
 import { LoadingSkeleton } from './components/StateViews';
+import { auth } from './services/auth';
 
 // Feature Views
 import { StartScreen } from './features/start/StartScreen';
@@ -26,6 +27,13 @@ const AdminView = lazy(() =>
 const AppRoutes: React.FC = () => {
   const location = useLocation();
   const { indexA, indexB, indexC } = useAssessment();
+  const [loggedIn, setLoggedIn] = React.useState(!!auth.getUser());
+  React.useEffect(() => auth.subscribe((u) => setLoggedIn(!!u)), []);
+
+  // Everything except the login/start page and the admin panel requires a logged-in user
+  if (!loggedIn && location.pathname !== '/' && location.pathname !== '/admin') {
+    return <Navigate to="/" replace />;
+  }
 
   // Determine current step index for the progress bar
   let currentStepIndex = 0;

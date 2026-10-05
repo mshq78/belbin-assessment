@@ -1,10 +1,9 @@
 export const BRAND_CONFIG = {
-  appTitle: 'ارزیابی نقش‌های تیمی مبتنی بر چارچوب بلبین',
-  shortTitle: 'ارزیابی بلبین',
-  subtitle: 'ابزار سنجش رفتاری و کشف الگوهای مشارکت تیمی',
+  appTitle: 'نقش‌نما',
+  shortTitle: 'نقش‌نما',
+  subtitle: 'تصویری از شیوه نقش‌آفرینی شما در تیم',
   version: '1.0',
   adminDemoPassword: 'admin', // Demo password (see ASSUMPTIONS.md - replace with OAuth/JWT in prod)
-  supportEmail: 'info@belbin-eval.ir',
   weights: {
     A: 0.35,
     B: 0.40,

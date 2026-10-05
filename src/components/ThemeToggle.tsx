@@ -13,10 +13,10 @@ export const ThemeToggle: React.FC<{ className?: string }> = ({ className = '' }
     const root = document.documentElement;
     if (isDark) {
       root.classList.add('dark');
-      localStorage.setItem('belbin_theme', 'dark');
+      localStorage.setItem('naghshnama_theme', 'dark');
     } else {
       root.classList.remove('dark');
-      localStorage.setItem('belbin_theme', 'light');
+      localStorage.setItem('naghshnama_theme', 'light');
     }
   }, [isDark]);
 

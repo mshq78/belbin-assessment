@@ -9,14 +9,9 @@ interface BrandLockupProps {
 export const BrandLockup: React.FC<BrandLockupProps> = ({ compact = false, className = '' }) => {
   return (
     <div className={`flex items-center gap-3 select-none ${className}`}>
-      {/* Emblem SVG */}
+      {/* Brand mark */}
       <div className={`relative flex items-center justify-center shrink-0 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-950 border border-amber-400/40 shadow-sm ${compact ? 'w-9 h-9' : 'w-11 h-11'}`}>
-        <svg viewBox="0 0 40 40" className="w-6 h-6" fill="none">
-          <circle cx="20" cy="20" r="14" stroke="#F2C14E" strokeWidth="1.5" strokeDasharray="3 1.5" />
-          <polygon points="20,10 28,26 12,26" fill="none" stroke="#F2C14E" strokeWidth="1.5" />
-          <polygon points="20,30 12,14 28,14" fill="none" stroke="#C9A227" strokeWidth="1.5" opacity="0.7" />
-          <circle cx="20" cy="20" r="2.5" fill="#F2C14E" />
-        </svg>
+        <img src="/logo-mark.png" alt="" draggable={false} className="w-6 h-6 object-contain" />
       </div>
 
       {/* Typography */}
