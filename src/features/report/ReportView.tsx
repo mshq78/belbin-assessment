@@ -103,6 +103,21 @@ export const ReportView: React.FC = () => {
   });
 
   return (
+    <table className="print-wrap">
+      {/* Table header repeats on every printed (PDF) page */}
+      <thead className="print-brand-head">
+        <tr>
+          <td>
+            <div className="print-brand" aria-hidden="true">
+              <img src="/logo-full.png" alt="" />
+              <span>{UI_STRINGS.common.appTitle} — {UI_STRINGS.common.subtitle}</span>
+            </div>
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
     <div ref={reportRef} className="space-y-8 select-none print:p-0 print:space-y-6">
       {/* Top Meta & Action Bar */}
       <header className="p-5 sm:p-6 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-4">
@@ -477,5 +492,9 @@ export const ReportView: React.FC = () => {
         </div>
       </footer>
     </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   );
 };
