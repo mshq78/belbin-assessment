@@ -7,11 +7,7 @@ import { toPersianDigits, formatScore } from '../../utils/number';
 import { RadarChart } from '../../components/RadarChart';
 import { Button } from '../../components/Button';
 import { Collapsible } from '../../components/Collapsible';
-import { toPng } from 'html-to-image';
 import {
-  Printer,
-  Image as ImageIcon,
-  Copy,
   Check,
   RotateCcw,
   Sparkles,
@@ -29,12 +25,9 @@ import { motion } from 'motion/react';
 export const ReportView: React.FC = () => {
   const navigate = useNavigate();
   const { completedSession, resetAll } = useAssessment();
-  const reportRef = useRef<HTMLDivElement>(null);
 
   const [chartMode, setChartMode] = useState<'bar' | 'radar'>('bar');
   const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({});
-  const [isCopying, setIsCopying] = useState(false);
-  const [isExportingImage, setIsExportingImage] = useState(false);
 
   if (!completedSession) {
     return (
@@ -57,40 +50,6 @@ export const ReportView: React.FC = () => {
     }));
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleCopyTracking = async () => {
-    setIsCopying(true);
-    const text = `کد پیگیری نقش‌نما: ${trackingCode}\nلینک ارزیابی: ${window.location.origin}`;
-    try {
-      await navigator.clipboard.writeText(text);
-      setTimeout(() => setIsCopying(false), 2000);
-    } catch (e) {
-      setIsCopying(false);
-    }
-  };
-
-  const handleExportImage = async () => {
-    if (!reportRef.current) return;
-    setIsExportingImage(true);
-    try {
-      const dataUrl = await toPng(reportRef.current, {
-        cacheBust: true,
-        backgroundColor: document.documentElement.classList.contains('dark') ? '#08121D' : '#F8F5EE',
-      });
-      const link = document.createElement('a');
-      link.download = `naghshnama_report_${trackingCode || 'result'}.png`;
-      link.href = dataUrl;
-      link.click();
-    } catch (err) {
-      console.error('Failed to export report image', err);
-    } finally {
-      setIsExportingImage(false);
-    }
-  };
-
   const handleRestart = async () => {
     await resetAll();
     navigate('/');
@@ -103,22 +62,7 @@ export const ReportView: React.FC = () => {
   });
 
   return (
-    <table className="print-wrap">
-      {/* Table header repeats on every printed (PDF) page */}
-      <thead className="print-brand-head">
-        <tr>
-          <td>
-            <div className="print-brand" aria-hidden="true">
-              <img src="/logo-full.png" alt="" />
-              <span>{UI_STRINGS.common.appTitle} — {UI_STRINGS.common.subtitle}</span>
-            </div>
-          </td>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>
-    <div ref={reportRef} className="space-y-8 select-none print:p-0 print:space-y-6">
+    <div className="space-y-8 select-none">
       {/* Top Meta & Action Bar */}
       <header className="p-5 sm:p-6 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
@@ -152,35 +96,6 @@ export const ReportView: React.FC = () => {
             {UI_STRINGS.report.dateLabel} <strong>{formattedDate}</strong>
           </span>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopyTracking}
-              leftIcon={isCopying ? <Check className="w-3.5 h-3.5 text-amber-500" /> : <Copy className="w-3.5 h-3.5" />}
-            >
-              {isCopying ? UI_STRINGS.common.copied : UI_STRINGS.common.copyTracking}
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              isLoading={isExportingImage}
-              onClick={handleExportImage}
-              leftIcon={<ImageIcon className="w-3.5 h-3.5" />}
-            >
-              {UI_STRINGS.common.downloadImage}
-            </Button>
-
-            <Button
-              variant="navy"
-              size="sm"
-              onClick={handlePrint}
-              leftIcon={<Printer className="w-3.5 h-3.5" />}
-            >
-              {UI_STRINGS.common.downloadPdf}
-            </Button>
-          </div>
         </div>
       </header>
 
@@ -483,18 +398,11 @@ export const ReportView: React.FC = () => {
         </p>
 
         <div className="pt-4 flex items-center justify-center gap-3 no-print">
-          <Button variant="primary" size="md" onClick={handlePrint} leftIcon={<Printer className="w-4 h-4" />}>
-            {UI_STRINGS.common.downloadPdf}
-          </Button>
           <Button variant="outline" size="md" onClick={handleRestart} leftIcon={<RotateCcw className="w-4 h-4" />}>
             {UI_STRINGS.common.restart}
           </Button>
         </div>
       </footer>
     </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
   );
 };

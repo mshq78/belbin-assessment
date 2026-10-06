@@ -11,8 +11,6 @@ import { Button } from '../../components/Button';
 import { UsersPanel } from './UsersPanel';
 import {
   Lock,
-  FileJson,
-  FileSpreadsheet,
   CheckCircle2,
   AlertTriangle,
   Eye,
@@ -70,79 +68,6 @@ export const AdminView: React.FC = () => {
   const handleRunTests = () => {
     const result = runAllUnitTests();
     setTestResults(result);
-  };
-
-  // Export JSON
-  const handleExportJSON = () => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(sessions, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `naghshnama_sessions_${new Date().toISOString().slice(0, 10)}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-  };
-
-  // Export CSV
-  const handleExportCSV = () => {
-    if (sessions.length === 0) return;
-
-    const headers = [
-      'SessionID',
-      'TrackingCode',
-      'Name',
-      'Mobile',
-      'OrgCode',
-      'StartedAt',
-      'FinishedAt',
-      'InstrumentVersion',
-      'RQIScore',
-      'RQILevel',
-      'SpeedDeductionA',
-      'SpeedDeductionB',
-      'SideBiasDeductionA',
-      'SpearmanAvg',
-      'SpearmanDeduction',
-      ...ROLE_CODES_LIST.map((c) => `Final_${c}`),
-      'Top1_Role',
-      'Top2_Role',
-      'Top3_Role',
-    ];
-
-    const rows = sessions.map((s) => {
-      const row = [
-        `"${s.sessionId}"`,
-        `"${s.trackingCode || ''}"`,
-        `"${s.participantName || ''}"`,
-        `"${s.participantProfile?.mobile || ''}"`,
-        `"${s.participantProfile?.orgCode || ''}"`,
-        `"${s.startedAt}"`,
-        `"${s.finishedAt}"`,
-        `"${s.instrumentVersion}"`,
-        s.rqi?.score ?? '',
-        `"${s.rqi?.levelLabel ?? ''}"`,
-        s.rqi?.deductions?.speedA ?? 0,
-        s.rqi?.deductions?.speedB ?? 0,
-        s.rqi?.deductions?.sideBiasA ?? 0,
-        s.rqi?.details?.avgSpearman?.toFixed(3) ?? '',
-        s.rqi?.deductions?.spearman ?? 0,
-        ...ROLE_CODES_LIST.map((c) => s.scoring?.finalTotals[c]?.toFixed(1) ?? ''),
-        `"${s.scoring?.top3[0]?.persianTitle || ''}"`,
-        `"${s.scoring?.top3[1]?.persianTitle || ''}"`,
-        `"${s.scoring?.top3[2]?.persianTitle || ''}"`,
-      ];
-      return row.join(',');
-    });
-
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `naghshnama_sessions_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
   };
 
   const filteredSessions = sessions.filter((s) => {
@@ -247,26 +172,6 @@ export const AdminView: React.FC = () => {
             leftIcon={<ShieldCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />}
           >
             {UI_STRINGS.admin.runTests}
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportCSV}
-            disabled={sessions.length === 0}
-            leftIcon={<FileSpreadsheet className="w-3.5 h-3.5" />}
-          >
-            {UI_STRINGS.admin.exportCsv}
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportJSON}
-            disabled={sessions.length === 0}
-            leftIcon={<FileJson className="w-3.5 h-3.5" />}
-          >
-            {UI_STRINGS.admin.exportJson}
           </Button>
 
           <Button

@@ -48,98 +48,21 @@
   transform: rotateY(180deg);
 }
 
-/* Printed header with the full GERA logo: on screen the wrapper table is transparent */
-.print-wrap,
-.print-wrap > tbody,
-.print-wrap > tbody > tr,
-.print-wrap > tbody > tr > td {
-  display: block;
-  width: 100%;
-}
-.print-brand-head {
-  display: none;
-}
-
+/* No exports: printing / saving as PDF yields an empty page with a notice */
 @media print {
-  @page {
-    size: A4;
-    margin: 12mm;
-  }
-  .print-wrap {
-    display: table;
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .print-wrap > tbody {
-    display: table-row-group;
-  }
-  .print-wrap > tbody > tr {
-    display: table-row;
-  }
-  .print-wrap > tbody > tr > td,
-  .print-wrap > thead > tr > td {
-    display: table-cell;
-    padding: 0;
-  }
-  .print-brand-head {
-    display: table-header-group;
-  }
-  .print-brand {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 28mm;
-    margin-bottom: 5mm;
-    padding-bottom: 2mm;
-    border-bottom: 0.4mm solid #cbd5e1;
-  }
-  .print-brand img {
-    height: 26mm;
-    width: auto;
-  }
-  .print-brand span {
-    font-size: 9pt;
-    color: #475569;
-  }
+  html,
   body {
     background: #ffffff !important;
-    color: #0f172a !important;
   }
-  .no-print {
+  body * {
     display: none !important;
   }
-  .print-only {
-    display: block !important;
-  }
-  /* Flip cards: flatten 3D so back faces are not printed mirrored */
-  .perspective-1000 {
-    perspective: none !important;
-    min-height: 0 !important;
-    break-inside: avoid;
-  }
-  .flip-inner {
-    transform: none !important;
-    transform-style: flat !important;
-    height: auto !important;
-  }
-  .flip-face {
-    position: static !important;
-    transform: none !important;
-    backface-visibility: visible !important;
-    -webkit-backface-visibility: visible !important;
-    overflow: visible !important;
-    margin-bottom: 8px;
-    box-shadow: none !important;
-  }
-  .flip-face-back {
-    background: #ffffff !important;
-    border-color: #e2e8f0 !important;
-  }
-  .flip-face-back * {
-    color: #0f172a !important;
-  }
-  .page-break-inside-avoid {
-    break-inside: avoid;
-    page-break-inside: avoid;
+  body::before {
+    content: 'چاپ و خروجی گرفتن از این صفحه امکان‌پذیر نیست. نتایج فقط درون سامانه قابل مشاهده است.';
+    display: block;
+    padding: 24mm 12mm;
+    font-size: 14pt;
+    text-align: center;
+    color: #0f172a;
   }
 }
